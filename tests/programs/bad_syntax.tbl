@@ -1,0 +1,4 @@
+let a : int = 1
+let b : int = (2 + 3;
+let c : int = * 4;
+let d : int = 5;
