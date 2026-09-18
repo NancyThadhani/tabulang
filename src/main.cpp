@@ -2,6 +2,7 @@
 #include "parser.hpp"
 #include "sema.hpp"
 #include "tacgen.hpp"
+#include "blocks.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -10,13 +11,14 @@
 static void usage() {
     std::cout << "tblc - TabuLang compiler\n"
               << "usage: tblc <source.tbl> [--dump-tokens] [--dump-ast] "
-                 "[--dump-symbols] [--dump-schemas] [--dump-tac] [-O1]\n";
+                 "[--dump-symbols] [--dump-schemas] [--dump-tac] [--dump-cfg] "
+                 "[-O1]\n";
 }
 
 int main(int argc, char** argv) {
     std::string path;
     bool dumpTokens = false, dumpTree = false, dumpSyms = false,
-         dumpSchemas = false, dumpTac = false, opt = false;
+         dumpSchemas = false, dumpTac = false, dumpCfg = false, opt = false;
 
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
@@ -26,6 +28,7 @@ int main(int argc, char** argv) {
         else if (a == "--dump-symbols") { dumpSyms = true; }
         else if (a == "--dump-schemas") { dumpSchemas = true; }
         else if (a == "--dump-tac")     { dumpTac = true; }
+        else if (a == "--dump-cfg")     { dumpCfg = true; }
         else if (a == "-O1")            { opt = true; }
         else if (!a.empty() && a[0] == '-') {
             std::cerr << "unknown option " << a << "\n";
@@ -80,6 +83,11 @@ int main(int argc, char** argv) {
         for (const auto& f : tac.fragments()) dumpStream(f);
         std::cout << "total: " << tac.quadCount() << " quadruples, "
                   << tac.tempCount() << " temporaries\n";
+    }
+
+    if (dumpCfg) {
+        Cfg(tac.main()).dump();
+        for (const auto& f : tac.fragments()) Cfg(f).dump();
     }
 
     std::cout << "front end: " << toks.size() << " tokens, "

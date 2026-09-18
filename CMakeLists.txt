@@ -15,6 +15,7 @@ add_library(tabulang_core
   src/symtab.cpp
   src/sema.cpp
   src/tacgen.cpp
+  src/blocks.cpp
 )
 target_include_directories(tabulang_core PUBLIC src)
 
