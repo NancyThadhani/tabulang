@@ -1,0 +1,10 @@
+table sales = load("sales.csv") with schema {
+  region : string, revenue : int, units : int
+};
+
+table t1 = sales
+  |> filter(regoin == "north")
+  |> group_by(region)
+  |> aggregate(bad = sum(region), n = count(revenue));
+
+table t2 = sales |> sort(reveune desc);

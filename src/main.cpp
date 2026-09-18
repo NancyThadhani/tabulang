@@ -9,12 +9,13 @@
 static void usage() {
     std::cout << "tblc - TabuLang compiler\n"
               << "usage: tblc <source.tbl> [--dump-tokens] [--dump-ast] "
-                 "[--dump-symbols] [-O1]\n";
+                 "[--dump-symbols] [--dump-schemas] [-O1]\n";
 }
 
 int main(int argc, char** argv) {
     std::string path;
-    bool dumpTokens = false, dumpTree = false, dumpSyms = false, opt = false;
+    bool dumpTokens = false, dumpTree = false, dumpSyms = false,
+         dumpSchemas = false, opt = false;
 
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
@@ -22,6 +23,7 @@ int main(int argc, char** argv) {
         else if (a == "--dump-tokens")  { dumpTokens = true; }
         else if (a == "--dump-ast")     { dumpTree = true; }
         else if (a == "--dump-symbols") { dumpSyms = true; }
+        else if (a == "--dump-schemas") { dumpSchemas = true; }
         else if (a == "-O1")            { opt = true; }
         else if (!a.empty() && a[0] == '-') {
             std::cerr << "unknown option " << a << "\n";
@@ -52,6 +54,19 @@ int main(int argc, char** argv) {
     sema.analyze(ast.get());
 
     if (dumpSyms) sema.table().dump();
+
+    if (dumpSchemas) {
+        for (const auto& kid : ast->kids) {
+            if (kid->kind != N::TableDecl) continue;
+            Symbol* s = sema.table().lookup(kid->text);
+            if (!s) continue;
+            std::cout << s->name << " : {";
+            for (size_t i = 0; i < s->schema.size(); ++i)
+                std::cout << (i ? ", " : "") << s->schema[i].name
+                          << ":" << s->schema[i].type;
+            std::cout << "}\n";
+        }
+    }
 
     if (errors.any()) { errors.report(path); return 1; }
 
