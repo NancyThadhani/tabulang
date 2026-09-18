@@ -1,0 +1,17 @@
+#pragma once
+#include "tac.hpp"
+#include "bytecode.hpp"
+#include <map>
+
+class CodeGen {
+public:
+    // Lowers one quadruple stream to TabVM bytecode.
+    std::vector<Instr> generate(const Stream& s);
+
+private:
+    void push(std::vector<Instr>& out, const std::string& operand);
+    static bool isNumber(const std::string& s);
+
+    std::map<int, int> quadToInstr_;    // quadruple index -> instruction index
+    std::vector<std::pair<int,int>> patches_;   // instruction index, target quad
+};
