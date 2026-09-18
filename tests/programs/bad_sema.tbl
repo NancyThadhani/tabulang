@@ -1,0 +1,7 @@
+let a : int = 1;
+let a : int = 2;
+let b : int = c + 1;
+let d : float = 1.5;
+let e : int = d;
+while (a) { print(a); }
+let f : bool = 1 + true;

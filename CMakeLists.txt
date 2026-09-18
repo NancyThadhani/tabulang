@@ -12,6 +12,8 @@ add_library(tabulang_core
   src/lexer.cpp
   src/ast.cpp
   src/parser.cpp
+  src/symtab.cpp
+  src/sema.cpp
 )
 target_include_directories(tabulang_core PUBLIC src)
 

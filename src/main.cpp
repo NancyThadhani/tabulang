@@ -1,5 +1,6 @@
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "sema.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -7,19 +8,21 @@
 
 static void usage() {
     std::cout << "tblc - TabuLang compiler\n"
-              << "usage: tblc <source.tbl> [--dump-tokens] [--dump-ast] [-O1]\n";
+              << "usage: tblc <source.tbl> [--dump-tokens] [--dump-ast] "
+                 "[--dump-symbols] [-O1]\n";
 }
 
 int main(int argc, char** argv) {
     std::string path;
-    bool dumpTokens = false, dumpTree = false, opt = false;
+    bool dumpTokens = false, dumpTree = false, dumpSyms = false, opt = false;
 
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
-        if (a == "--help")             { usage(); return 0; }
-        else if (a == "--dump-tokens") { dumpTokens = true; }
-        else if (a == "--dump-ast")    { dumpTree = true; }
-        else if (a == "-O1")           { opt = true; }
+        if (a == "--help")              { usage(); return 0; }
+        else if (a == "--dump-tokens")  { dumpTokens = true; }
+        else if (a == "--dump-ast")     { dumpTree = true; }
+        else if (a == "--dump-symbols") { dumpSyms = true; }
+        else if (a == "-O1")            { opt = true; }
         else if (!a.empty() && a[0] == '-') {
             std::cerr << "unknown option " << a << "\n";
             return 2;
@@ -44,6 +47,11 @@ int main(int argc, char** argv) {
     auto ast = Parser(toks, errors).parseProgram();
 
     if (dumpTree) dumpAst(ast.get());
+
+    Sema sema(errors);
+    sema.analyze(ast.get());
+
+    if (dumpSyms) sema.table().dump();
 
     if (errors.any()) { errors.report(path); return 1; }
 
