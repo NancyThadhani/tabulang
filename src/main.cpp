@@ -1,6 +1,7 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "sema.hpp"
+#include "tacgen.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -9,13 +10,13 @@
 static void usage() {
     std::cout << "tblc - TabuLang compiler\n"
               << "usage: tblc <source.tbl> [--dump-tokens] [--dump-ast] "
-                 "[--dump-symbols] [--dump-schemas] [-O1]\n";
+                 "[--dump-symbols] [--dump-schemas] [--dump-tac] [-O1]\n";
 }
 
 int main(int argc, char** argv) {
     std::string path;
     bool dumpTokens = false, dumpTree = false, dumpSyms = false,
-         dumpSchemas = false, opt = false;
+         dumpSchemas = false, dumpTac = false, opt = false;
 
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
@@ -24,6 +25,7 @@ int main(int argc, char** argv) {
         else if (a == "--dump-ast")     { dumpTree = true; }
         else if (a == "--dump-symbols") { dumpSyms = true; }
         else if (a == "--dump-schemas") { dumpSchemas = true; }
+        else if (a == "--dump-tac")     { dumpTac = true; }
         else if (a == "-O1")            { opt = true; }
         else if (!a.empty() && a[0] == '-') {
             std::cerr << "unknown option " << a << "\n";
@@ -69,6 +71,16 @@ int main(int argc, char** argv) {
     }
 
     if (errors.any()) { errors.report(path); return 1; }
+
+    TacGen tac;
+    tac.generate(ast.get());
+
+    if (dumpTac) {
+        dumpStream(tac.main());
+        for (const auto& f : tac.fragments()) dumpStream(f);
+        std::cout << "total: " << tac.quadCount() << " quadruples, "
+                  << tac.tempCount() << " temporaries\n";
+    }
 
     std::cout << "front end: " << toks.size() << " tokens, "
               << ast->kids.size() << " top-level statements, no errors\n";
