@@ -1,0 +1,18 @@
+table sales = load("sales.csv") with schema {
+  region : string, revenue : int, units : int
+};
+
+let threshold : int = 200 * 5;  let cap : int = 40;
+let lo : int = cap * 2 + 1;     let hi : int = cap * 2 + 5;
+
+table top = sales
+  |> derive(unit_price = revenue / units)
+  |> filter(revenue > threshold && units > 0)
+  |> group_by(region)
+  |> aggregate(total = sum(revenue), avg_price = mean(unit_price))
+  |> sort(total desc) |> limit(3);
+
+show top;
+
+let i : int = 0;
+while (i < 3) { print(i * 2 + 1); i = i + 1; }

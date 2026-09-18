@@ -9,6 +9,7 @@ add_compile_options(-Wall -Wextra -g)
 
 add_library(tabulang_core
   src/token.cpp
+  src/lexer.cpp
 )
 target_include_directories(tabulang_core PUBLIC src)
 
