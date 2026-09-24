@@ -23,7 +23,7 @@ const char* opName(Op o) {
         case Op::JMPF:  return "JMPF";
         case Op::PRINT: return "PRINT";
         case Op::HALT:  return "HALT";
-        case Op::TABLE_STUB: return "TABLE";
+        case Op::TABLE: return "TABLE";
     }
     return "?";
 }
@@ -36,6 +36,10 @@ void dumpCode(const std::vector<Instr>& code) {
         if (code[i].op == Op::PUSHC || code[i].op == Op::JMP ||
             code[i].op == Op::JMPF)
             std::cout << code[i].arg;
+        else if (code[i].op == Op::TABLE)
+            std::cout << std::setw(10) << code[i].name << code[i].a
+                      << (code[i].b.empty() ? "" : "  " + code[i].b)
+                      << (code[i].r.empty() ? "" : "  -> " + code[i].r);
         else if (!code[i].name.empty())
             std::cout << code[i].name;
         std::cout << std::right << "\n";
@@ -50,9 +54,27 @@ bool CodeGen::isNumber(const std::string& s) {
     return true;
 }
 
+long long internString(const std::string& s) {
+    static std::map<std::string, long long> pool;
+    auto it = pool.find(s);
+    if (it != pool.end()) return it->second;
+    long long id = static_cast<long long>(pool.size()) + 1;
+    pool[s] = id;
+    return id;
+}
+
 void CodeGen::push(std::vector<Instr>& out, const std::string& operand) {
-    if (isNumber(operand)) out.push_back({Op::PUSHC, std::stoll(operand), ""});
-    else                   out.push_back({Op::LOAD, 0, operand});
+    if (isNumber(operand))
+        out.push_back({Op::PUSHC, std::stoll(operand), ""});
+    else if (operand.size() >= 2 && operand.front() == '"' && operand.back() == '"')
+        out.push_back({Op::PUSHC, internString(operand.substr(1, operand.size() - 2)), ""});
+    else
+        out.push_back({Op::LOAD, 0, operand});
+}
+
+bool CodeGen::isTableStage(const std::string& op) {
+    return op == "load" || op == "filter" || op == "derive" || op == "select" ||
+           op == "group_by" || op == "aggregate" || op == "sort" || op == "limit";
 }
 
 std::vector<Instr> CodeGen::generate(const Stream& s) {
@@ -64,7 +86,20 @@ std::vector<Instr> CodeGen::generate(const Stream& s) {
         const Quad& q = s.code[i];
         quadToInstr_[static_cast<int>(i)] = static_cast<int>(out.size());
 
-        if (q.op == "=") {
+        if (isTableStage(q.op)) {
+            // one table instruction per stage; the result is a table value
+            out.push_back({Op::TABLE, 0, q.op, q.a1, q.a2, q.res});
+            tables_.insert(q.res);
+        }
+        else if (q.op == "=" && tables_.count(q.a1)) {
+            // table assignment: bind the name to the table value, not a scalar
+            out.push_back({Op::TABLE, 0, "copy", q.a1, "", q.res});
+            tables_.insert(q.res);
+        }
+        else if (q.op == "show") {
+            out.push_back({Op::TABLE, 0, "show", q.a1, "", ""});
+        }
+        else if (q.op == "=") {
             push(out, q.a1);
             out.push_back({Op::STORE, 0, q.res});
         }
@@ -114,8 +149,7 @@ std::vector<Instr> CodeGen::generate(const Stream& s) {
             out.push_back({Op::HALT, 0, ""});
         }
         else {
-            // load, filter, derive, group_by, aggregate, sort, limit, show
-            out.push_back({Op::TABLE_STUB, 0, q.op + " " + q.a1});
+            std::cerr << "codegen: no lowering for quadruple op '" << q.op << "'\n";
         }
     }
 

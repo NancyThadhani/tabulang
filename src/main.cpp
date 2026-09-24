@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iostream>
 #include <string>
+#include <map>
 
 static void usage() {
     std::cout << "tblc - TabuLang compiler\n"
@@ -18,12 +19,25 @@ static void usage() {
                  "[--dump-dag] [--dump-bytecode] [--run] [-O1]\n";
 }
 
+// Optimizes each basic block through its DAG, then renumbers jump targets.
+// Removing quadruples shifts every later index, and every jump target is a
+// block leader, so a map from old leader index to new index is enough.
 static Stream optimizeStream(const Stream& s) {
     Cfg cfg(s);
     Stream out{s.name, {}};
+    std::map<int, int> newIndex;
     for (const auto& b : cfg.blocks()) {
+        newIndex[b.first] = static_cast<int>(out.code.size());
         Dag d(s, b.first, b.last);
         for (const auto& q : d.result()) out.code.push_back(q);
+    }
+    newIndex[static_cast<int>(s.code.size())] = static_cast<int>(out.code.size());
+
+    for (auto& q : out.code) {
+        bool isJump = q.op == "goto" || (q.op.size() > 2 && q.op.compare(0, 2, "if") == 0);
+        if (!isJump || q.res.empty()) continue;
+        auto it = newIndex.find(std::stoi(q.res));
+        if (it != newIndex.end()) q.res = std::to_string(it->second);
     }
     return out;
 }
@@ -136,13 +150,31 @@ int main(int argc, char** argv) {
         CodeGen cg;
         auto code = cg.generate(finalMain);
 
-        if (dumpBc) dumpCode(code);
+        // every per-row fragment is compiled to its own bytecode
+        std::map<std::string, std::vector<Instr>> fragCode;
+        for (const auto& f : finalFrags) fragCode[f.name] = CodeGen().generate(f);
+
+        if (dumpBc) {
+            dumpCode(code);
+            for (const auto& f : fragCode) {
+                std::cout << "--- fragment " << f.first << "\n";
+                dumpCode(f.second);
+            }
+        }
 
         if (run) {
+            std::string baseDir;
+            auto slash = path.find_last_of("/\\");
+            if (slash != std::string::npos) baseDir = path.substr(0, slash);
+
             std::cout << "--- execution\n";
-            Vm vm;
-            long long n = vm.run(code);
-            std::cout << "--- " << n << " instructions executed\n";
+            Vm vm(fragCode, baseDir);
+            bool ok = vm.run(code);
+            const RunStats& st = vm.stats();
+            std::cout << "--- " << st.instructions << " instructions executed, "
+                      << st.rowsProcessed << " rows and " << st.cellsProcessed
+                      << " cells processed by table stages\n";
+            if (!ok) return 3;
         }
     }
 

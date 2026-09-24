@@ -280,7 +280,12 @@ std::string TacGen::pipeline(Node* n, Stream& s) {
             first = false;
             if (k->kind == N::Load) {
                 cur = newTable();
-                s.emit("load", "\"" + k->text + "\"", "", cur);
+                // the declared schema travels with the load, so the runtime
+                // can check the CSV header and parse each field by type
+                std::string schema;
+                for (const auto& c : k->kids)
+                    schema += (schema.empty() ? "" : ",") + c->text + ":" + c->type;
+                s.emit("load", "\"" + k->text + "\"", schema, cur);
             } else {
                 cur = k->text;                     // an existing table
             }

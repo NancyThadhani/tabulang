@@ -1,0 +1,5 @@
+table s = load("sales.csv") with schema { region : string, revenue : int, units : int };
+table n = s |> filter(region == "North" || units >= 20) |> select(region, revenue) |> sort(revenue asc);
+show n;
+table c = s |> group_by(region) |> aggregate(n = count(units), lo = min(revenue), hi = max(revenue)) |> sort(region asc);
+show c;

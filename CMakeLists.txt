@@ -18,6 +18,7 @@ add_library(tabulang_core
   src/blocks.cpp
   src/dag.cpp
   src/codegen.cpp
+  src/table.cpp
   src/vm.cpp
 )
 target_include_directories(tabulang_core PUBLIC src)
