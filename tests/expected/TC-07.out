@@ -1,0 +1,3 @@
+sales : {region:string, revenue:int, units:int}
+top : {region:string, total:int, avg_price:float}
+front end: 153 tokens, 9 top-level statements, no errors

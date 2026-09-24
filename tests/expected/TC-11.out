@@ -1,0 +1,27 @@
+--- DAG for B0 segment 0 (9 nodes)
+  n0  leaf T1   labels: T1, sales
+  n1  leaf 1000   labels: threshold
+  n2  leaf 40   labels: cap
+  n3  leaf 2   [dead]
+  n4  leaf 80   labels: t1, t3   [dead]
+  n5  leaf 1   [dead]
+  n6  leaf 81   labels: t2, lo
+  n7  leaf 5   [dead]
+  n8  leaf 85   labels: t4, hi
+--- DAG for B0 segment 1 (1 nodes)
+  n0  leaf T7   labels: T7, top
+--- DAG for B0 segment 2 (1 nodes)
+  n0  leaf 0   labels: i
+--- DAG for B1 (no arithmetic)
+--- DAG for B2 (no arithmetic)
+--- DAG for B3 segment 0 (5 nodes)
+  n0  leaf i   labels: i
+  n1  leaf 2
+  n2  *(n0, n1)   labels: t7
+  n3  leaf 1
+  n4  +(n2, n3)   labels: t8
+--- DAG for B3 segment 1 (3 nodes)
+  n0  leaf i
+  n1  leaf 1
+  n2  +(n0, n1)   labels: t9, i
+front end: 153 tokens, 9 top-level statements, no errors

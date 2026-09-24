@@ -15,6 +15,8 @@ add_library(tabulang_core
   src/symtab.cpp
   src/sema.cpp
   src/tacgen.cpp
+  src/pipeopt.cpp
+  src/dot.cpp
   src/blocks.cpp
   src/dag.cpp
   src/codegen.cpp
@@ -25,3 +27,5 @@ target_include_directories(tabulang_core PUBLIC src)
 
 add_executable(tblc src/main.cpp)
 target_link_libraries(tblc PRIVATE tabulang_core)
+add_executable(gencsv tools/gencsv.cpp)
+add_executable(runtests tools/runtests.cpp)

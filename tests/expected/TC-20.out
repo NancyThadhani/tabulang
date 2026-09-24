@@ -1,0 +1,13 @@
+optimization: 37 quadruples before, 32 after, 5 removed (13%)
+--- execution
+top (3 rows)
+region   total  avg_price
+-------  -----  ---------
+East      6600     151.67
+Central   5000     200.00
+North     3700     175.00
+1
+3
+5
+--- 295 instructions executed, 38 rows and 130 cells processed by table stages
+front end: 153 tokens, 9 top-level statements, no errors

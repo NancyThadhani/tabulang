@@ -1,0 +1,7 @@
+tests/programs/bad_chars.tbl:2:7 lexical error: illegal character '@'
+tests/programs/bad_chars.tbl:3:17 lexical error: illegal character '$'
+tests/programs/bad_chars.tbl:4:7 lexical error: illegal character '`'
+tests/programs/bad_chars.tbl:2:9 syntax error: expected ':' after the variable name, found 'int'
+tests/programs/bad_chars.tbl:3:19 syntax error: expected ';' after the declaration, found '4'
+tests/programs/bad_chars.tbl:3:19 syntax error: expected a statement, found '4'
+tests/programs/bad_chars.tbl:4:9 syntax error: expected ':' after the variable name, found 'int'

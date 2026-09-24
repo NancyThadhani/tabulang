@@ -1,0 +1,1 @@
+runtime error: tests/programs/runtime/badint.csv:2: column 'revenue' expected int, found 'abc'

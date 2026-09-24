@@ -1,0 +1,10 @@
+symbol table
+  scope 0:
+    var   i : int   declared @17:1
+    table top {region:string, total:int, avg_price:float}   declared @8:1
+    var   hi : int   declared @6:33
+    var   lo : int   declared @6:1
+    var   cap : int   declared @5:33
+    var   threshold : int   declared @5:1
+    table sales {region:string, revenue:int, units:int}   declared @1:1
+front end: 153 tokens, 9 top-level statements, no errors

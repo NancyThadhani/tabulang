@@ -85,24 +85,42 @@ void Vm::countStage(const Table& t) {
     stats_.cellsProcessed += static_cast<long long>(t.rows.size() * t.cols.size());
 }
 
-// filter and derive: run the stage's fragment once per row.
+// filter, derive and rowpass: run per-row fragments over the table.
+// A plain filter or derive is a rowpass with one step. A fused rowpass runs
+// several steps on each row in order, so the row is visited once, and a
+// failing filter step drops the row before any later step runs.
+struct RowStep { bool filter; std::string col, frag; };
+
 bool Vm::rowStage(const Instr& in, const Table& src, Table& out) {
-    bool isFilter = in.name == "filter";
-    std::string fragName = in.b, newCol;
-    if (!isFilter) {                          // derive: "unit_price:=P0"
-        auto p = in.b.find(":=");
-        newCol = in.b.substr(0, p);
-        fragName = in.b.substr(p + 2);
+    std::vector<RowStep> steps;
+    std::vector<std::string> parts;
+    if (in.name == "rowpass") {
+        std::string cur;
+        for (char c : in.b) { if (c == ';') { parts.push_back(cur); cur.clear(); } else cur += c; }
+        parts.push_back(cur);
+    } else {
+        parts.push_back((in.name == "filter" ? "F:" : "D:") + in.b);
     }
-    auto f = frags_.find(fragName);
-    if (f == frags_.end()) return fail("missing fragment " + fragName);
+    for (const auto& p : parts) {
+        RowStep st;
+        st.filter = p[0] == 'F';
+        std::string body = p.substr(2);
+        if (st.filter) st.frag = body;
+        else {
+            auto k = body.find(":=");
+            st.col = body.substr(0, k);
+            st.frag = body.substr(k + 2);
+        }
+        if (!frags_.count(st.frag)) return fail("missing fragment " + st.frag);
+        steps.push_back(st);
+    }
 
     out.cols = src.cols;
     out.groupKeys.clear();
-    if (!isFilter) out.cols.push_back({newCol, "int"});
+    for (const auto& st : steps) if (!st.filter) out.cols.push_back({st.col, "int"});
     out.rows.clear();
 
-    // Column values seen by the fragment. Strings are interned so that
+    // Column values seen by the fragments. Strings are interned so that
     // == and != against a string literal compare ids.
     std::unordered_map<std::string, long long> rowEnv;
     for (size_t r = 0; r < src.rows.size(); ++r) {
@@ -114,20 +132,23 @@ bool Vm::rowStage(const Instr& in, const Table& src, Table& out) {
               : t == "float"  ? static_cast<long long>(row[k].f)
               : row[k].i;
         }
-        long long v = 0;
-        if (!exec(f->second, &rowEnv, &v)) {
-            std::cerr << "  in " << in.name << " (" << fragName << ") at row "
-                      << r + 1 << "\n";
-            return false;
+        std::vector<Cell> nr = row;
+        bool keep = true;
+        for (const auto& st : steps) {
+            long long v = 0;
+            if (!exec(frags_[st.frag], &rowEnv, &v)) {
+                std::cerr << "  in " << in.name << " (" << st.frag << ") at row "
+                          << r + 1 << "\n";
+                return false;
+            }
+            if (st.filter) { if (!v) { keep = false; break; } }
+            else {
+                Cell c; c.i = v;
+                nr.push_back(c);
+                rowEnv[st.col] = v;          // later steps can read the new column
+            }
         }
-        if (isFilter) {
-            if (v) out.rows.push_back(row);
-        } else {
-            auto nr = row;
-            Cell c; c.i = v;
-            nr.push_back(c);
-            out.rows.push_back(std::move(nr));
-        }
+        if (keep) out.rows.push_back(std::move(nr));
     }
     return true;
 }
@@ -161,7 +182,7 @@ bool Vm::tableOp(const Instr& in) {
     countStage(src);
     Table out;
     bool ok = true;
-    if      (k == "filter" || k == "derive") ok = rowStage(in, src, out);
+    if      (k == "filter" || k == "derive" || k == "rowpass") ok = rowStage(in, src, out);
     else if (k == "select")    ok = opSelect(src, in.b, out, err);
     else if (k == "group_by")  ok = opGroupBy(src, in.b, out, err);
     else if (k == "aggregate") ok = opAggregate(src, in.b, out, err);

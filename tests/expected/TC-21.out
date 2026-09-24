@@ -1,0 +1,19 @@
+--- execution
+n (5 rows)
+region   revenue
+-------  -------
+North        900
+North       1500
+North       2200
+East        3100
+Central     5000
+c (5 rows)
+region   n  lo    hi  
+-------  -  ----  ----
+Central  2   400  5000
+East     3  1100  3100
+North    3   900  2200
+South    2   800  1700
+West     2   600  1200
+--- 171 instructions executed, 51 rows and 153 cells processed by table stages
+front end: 99 tokens, 5 top-level statements, no errors

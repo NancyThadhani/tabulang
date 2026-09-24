@@ -1,0 +1,3 @@
+table s = load("sales.csv") with schema { region : string, revenue : int, units : int };
+table n = s |> filter(revenue > 100000) |> select(region);
+show n;

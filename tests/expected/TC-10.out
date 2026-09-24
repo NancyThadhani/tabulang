@@ -1,0 +1,28 @@
+--- CFG for main (4 blocks)
+  B0  quadruples 0..18   leader: first quadruple
+        successors: B1
+  B1  quadruples 19..19   leader: jump target
+        successors: B3, B2
+  B2  quadruples 20..20   leader: follows a jump
+        successors: (exit)
+  B3  quadruples 21..26   leader: jump target
+        successors: B1
+--- CFG for P0 (1 blocks)
+  B0  quadruples 0..1   leader: first quadruple
+        successors: (exit)
+--- CFG for P1 (7 blocks)
+  B0  quadruples 0..0   leader: first quadruple
+        successors: B2, B1
+  B1  quadruples 1..1   leader: follows a jump
+        successors: B5
+  B2  quadruples 2..2   leader: jump target
+        successors: B4, B3
+  B3  quadruples 3..3   leader: follows a jump
+        successors: B5
+  B4  quadruples 4..5   leader: jump target
+        successors: B6
+  B5  quadruples 6..6   leader: jump target
+        successors: B6
+  B6  quadruples 7..7   leader: jump target
+        successors: (exit)
+front end: 153 tokens, 9 top-level statements, no errors

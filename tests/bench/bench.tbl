@@ -1,0 +1,17 @@
+# Benchmark: the demo pipeline over a wider generated table.
+# Six columns are declared; the pipeline reads only three.
+table sales = load("sales_bench.csv") with schema {
+  region : string, product : string, revenue : int,
+  units : int, discount : int, returned : bool
+};
+
+let threshold : int = 200 * 5;
+
+table top = sales
+  |> derive(unit_price = revenue / units)
+  |> filter(revenue > threshold && units > 0)
+  |> group_by(region)
+  |> aggregate(total = sum(revenue), avg_price = mean(unit_price))
+  |> sort(total desc) |> limit(3);
+
+show top;

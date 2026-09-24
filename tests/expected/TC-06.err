@@ -1,0 +1,5 @@
+tests/programs/bad_sema.tbl:2:1 semantic error: 'a' is already declared in this scope at line 1
+tests/programs/bad_sema.tbl:3:15 semantic error: undeclared identifier 'c'
+tests/programs/bad_sema.tbl:5:1 type error: cannot initialise 'e' of type int with an expression of type float
+tests/programs/bad_sema.tbl:6:8 type error: while condition must be bool, found int
+tests/programs/bad_sema.tbl:7:18 type error: operator + requires numeric operands, found int and bool

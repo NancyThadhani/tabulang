@@ -68,13 +68,22 @@ void CodeGen::push(std::vector<Instr>& out, const std::string& operand) {
         out.push_back({Op::PUSHC, std::stoll(operand), ""});
     else if (operand.size() >= 2 && operand.front() == '"' && operand.back() == '"')
         out.push_back({Op::PUSHC, internString(operand.substr(1, operand.size() - 2)), ""});
+    else if (!operand.empty() && (isdigit((unsigned char)operand[0]) || operand[0] == '-') &&
+             operand.find('.') != std::string::npos) {
+        // TabVM scalar values are 64-bit integers; refuse rather than guess
+        std::cerr << "codegen error: float literal " << operand
+                  << " in scalar code is not supported by TabVM\n";
+        failed_ = true;
+        out.push_back({Op::PUSHC, 0, ""});
+    }
     else
         out.push_back({Op::LOAD, 0, operand});
 }
 
 bool CodeGen::isTableStage(const std::string& op) {
     return op == "load" || op == "filter" || op == "derive" || op == "select" ||
-           op == "group_by" || op == "aggregate" || op == "sort" || op == "limit";
+           op == "group_by" || op == "aggregate" || op == "sort" || op == "limit" ||
+           op == "rowpass";
 }
 
 std::vector<Instr> CodeGen::generate(const Stream& s) {

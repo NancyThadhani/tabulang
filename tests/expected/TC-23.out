@@ -1,0 +1,9 @@
+--- execution
+s (0 rows)
+region  revenue  units
+------  -------  -----
+g (0 rows)
+region  total
+------  -----
+--- 8 instructions executed, 0 rows and 0 cells processed by table stages
+front end: 50 tokens, 4 top-level statements, no errors

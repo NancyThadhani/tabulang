@@ -1,0 +1,5 @@
+table s = load("sales.csv") with schema { region : string, revenue : int, units : int };
+table a = s |> limit(0);
+table b = s |> limit(100);
+show a;
+show b;

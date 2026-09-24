@@ -1,0 +1,5 @@
+--- pipeline optimization
+  fusion: filter merged into one row pass -> D:unit_price:=P0;F:P1
+  0 filter(s) pushed down, 0 column(s) pruned, 1 stage(s) fused
+optimization: 15 quadruples before, 14 after, 1 removed (6%)
+front end: 55 tokens, 3 top-level statements, no errors

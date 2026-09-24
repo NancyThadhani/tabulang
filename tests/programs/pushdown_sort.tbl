@@ -1,0 +1,3 @@
+table s = load("sales.csv") with schema { region : string, revenue : int, units : int };
+table d = s |> sort(revenue desc) |> select(region, revenue) |> filter(revenue < 1500) |> limit(4);
+show d;

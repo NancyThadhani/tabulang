@@ -1,0 +1,4 @@
+table s = load("empty.csv") with schema { region : string, revenue : int, units : int };
+table g = s |> group_by(region) |> aggregate(total = sum(revenue));
+show s;
+show g;

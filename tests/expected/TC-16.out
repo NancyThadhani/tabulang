@@ -1,0 +1,28 @@
+--- TabVM bytecode (26 instructions)
+  0  PUSHC   0
+  1  STORE   i
+  2  LOAD    i
+  3  PUSHC   3
+  4  LT      
+  5  JMPF    7
+  6  JMP     8
+  7  JMP     25
+  8  LOAD    i
+  9  PUSHC   2
+ 10  MUL     
+ 11  STORE   t1
+ 12  LOAD    t1
+ 13  PUSHC   1
+ 14  ADD     
+ 15  STORE   t2
+ 16  LOAD    t2
+ 17  PRINT   
+ 18  LOAD    i
+ 19  PUSHC   1
+ 20  ADD     
+ 21  STORE   t3
+ 22  LOAD    t3
+ 23  STORE   i
+ 24  JMP     2
+ 25  HALT    
+front end: 31 tokens, 2 top-level statements, no errors

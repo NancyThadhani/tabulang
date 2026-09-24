@@ -6,6 +6,9 @@
 #include "dag.hpp"
 #include "codegen.hpp"
 #include "vm.hpp"
+#include "pipeopt.hpp"
+#include "dot.hpp"
+#include <chrono>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -16,7 +19,7 @@ static void usage() {
     std::cout << "tblc - TabuLang compiler\n"
               << "usage: tblc <source.tbl> [--dump-tokens] [--dump-ast] "
                  "[--dump-symbols] [--dump-schemas] [--dump-tac] [--dump-cfg] "
-                 "[--dump-dag] [--dump-bytecode] [--run] [-O1]\n";
+                 "[--dump-dag] [--dump-pipeline] [--dump-bytecode] [--dot-ast] [--dot-cfg] [--run] [-O1] [-O2]\n";
 }
 
 // Optimizes each basic block through its DAG, then renumbers jump targets.
@@ -46,7 +49,9 @@ int main(int argc, char** argv) {
     std::string path;
     bool dumpTokens = false, dumpTree = false, dumpSyms = false,
          dumpSchemas = false, dumpTac = false, dumpCfg = false,
-         dumpDag = false, dumpBc = false, run = false, opt = false;
+         dumpDag = false, dumpBc = false, run = false, opt = false,
+         opt2 = false, dumpPipe = false,
+         dotTree = false, dotFlow = false;
 
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
@@ -61,6 +66,10 @@ int main(int argc, char** argv) {
         else if (a == "--dump-bytecode")  { dumpBc = true; }
         else if (a == "--run")            { run = true; }
         else if (a == "-O1")              { opt = true; }
+        else if (a == "-O2")              { opt = true; opt2 = true; }
+        else if (a == "--dump-pipeline")  { dumpPipe = true; }
+        else if (a == "--dot-ast")        { dotTree = true; }
+        else if (a == "--dot-cfg")        { dotFlow = true; }
         else if (!a.empty() && a[0] == '-') {
             std::cerr << "unknown option " << a << "\n";
             return 2;
@@ -121,7 +130,26 @@ int main(int argc, char** argv) {
     Stream finalMain = tac.main();
     std::vector<Stream> finalFrags(tac.fragments().begin(), tac.fragments().end());
 
-    if (opt) {
+    if (opt2) {
+        // pipeline passes run first, on the unoptimized stage quadruples
+        Stream piped = tac.main();
+        PipeReport pr = optimizePipelines(piped, tac.fragments());
+        if (dumpPipe) {
+            std::cout << "--- pipeline optimization\n";
+            for (const auto& l : pr.log) std::cout << "  " << l << "\n";
+            std::cout << "  " << pr.pushed << " filter(s) pushed down, " << pr.pruned
+                      << " column(s) pruned, " << pr.fused << " stage(s) fused\n";
+        }
+        finalMain = optimizeStream(piped);
+        finalFrags.clear();
+        for (const auto& f : tac.fragments()) finalFrags.push_back(optimizeStream(f));
+
+        int after = static_cast<int>(finalMain.code.size());
+        for (const auto& f : finalFrags) after += static_cast<int>(f.code.size());
+        std::cout << "optimization: " << before << " quadruples before, "
+                  << after << " after, " << (before - after) << " removed ("
+                  << (before ? (before - after) * 100 / before : 0) << "%)\n";
+    } else if (opt) {
         finalMain = optimizeStream(tac.main());
         finalFrags.clear();
         for (const auto& f : tac.fragments()) finalFrags.push_back(optimizeStream(f));
@@ -141,6 +169,14 @@ int main(int argc, char** argv) {
                             << tac.tempCount() << " temporaries\n";
     }
 
+    if (dotTree) { dotAst(ast.get()); return 0; }
+    if (dotFlow) {
+        std::vector<Stream> all{finalMain};
+        all.insert(all.end(), finalFrags.begin(), finalFrags.end());
+        dotCfg(all);
+        return 0;
+    }
+
     if (dumpCfg) {
         Cfg(finalMain).dump();
         for (const auto& f : finalFrags) Cfg(f).dump();
@@ -152,7 +188,13 @@ int main(int argc, char** argv) {
 
         // every per-row fragment is compiled to its own bytecode
         std::map<std::string, std::vector<Instr>> fragCode;
-        for (const auto& f : finalFrags) fragCode[f.name] = CodeGen().generate(f);
+        bool cgFailed = cg.failed();
+        for (const auto& f : finalFrags) {
+            CodeGen fcg;
+            fragCode[f.name] = fcg.generate(f);
+            cgFailed = cgFailed || fcg.failed();
+        }
+        if (cgFailed) return 4;
 
         if (dumpBc) {
             dumpCode(code);
@@ -169,11 +211,16 @@ int main(int argc, char** argv) {
 
             std::cout << "--- execution\n";
             Vm vm(fragCode, baseDir);
+            auto t0 = std::chrono::steady_clock::now();
             bool ok = vm.run(code);
+            auto t1 = std::chrono::steady_clock::now();
             const RunStats& st = vm.stats();
             std::cout << "--- " << st.instructions << " instructions executed, "
                       << st.rowsProcessed << " rows and " << st.cellsProcessed
-                      << " cells processed by table stages\n";
+                      << " cells processed by table stages\n"
+                      << "--- execution time: "
+                      << std::chrono::duration<double, std::milli>(t1 - t0).count()
+                      << " ms\n";
             if (!ok) return 3;
         }
     }

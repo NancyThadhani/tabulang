@@ -1,0 +1,3 @@
+tests/programs/bad_schema.tbl:6:13 semantic error: undeclared identifier 'regoin'; did you mean 'region'?
+tests/programs/bad_schema.tbl:8:16 type error: sum() requires a numeric column, found string
+tests/programs/bad_schema.tbl:10:26 semantic error: column 'reveune' is not in scope; did you mean 'revenue'?

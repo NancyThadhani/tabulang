@@ -1,0 +1,38 @@
+optimization: 37 quadruples before, 33 after, 4 removed (10%)
+--- main (23 quadruples)
+  0  load      "sales.csv" region:string,revenue:int,units:intT1
+  1  =         T1          _           sales
+  2  =         1000        _           threshold
+  3  =         40          _           cap
+  4  =         81          _           lo
+  5  =         85          _           hi
+  6  derive    sales       unit_price:=P0T2
+  7  filter    T2          P1          T3
+  8  group_by  T3          region      T4
+  9  aggregate T4          total=sum(revenue),avg_price=mean(unit_price)T5
+ 10  sort      T5          total desc  T6
+ 11  limit     T6          3           T7
+ 12  =         T7          _           top
+ 13  show      top         _           _
+ 14  =         0           _           i
+ 15  if<       i           3           17
+ 16  goto      _           _           23
+ 17  *         i           2           t7
+ 18  +         t7          1           t8
+ 19  print     t8          _           _
+ 20  +         i           1           t9
+ 21  =         t9          _           i
+ 22  goto      _           _           15
+--- P0 (2 quadruples)
+  0  /         revenue     units       t5
+  1  ret       t5          _           _
+--- P1 (8 quadruples)
+  0  if>       revenue     threshold   2
+  1  goto      _           _           6
+  2  if>       units       0           4
+  3  goto      _           _           6
+  4  =         1           _           t6
+  5  goto      _           _           7
+  6  =         0           _           t6
+  7  ret       t6          _           _
+front end: 153 tokens, 9 top-level statements, no errors

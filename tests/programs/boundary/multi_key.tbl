@@ -1,0 +1,3 @@
+table s = load("sales.csv") with schema { region : string, revenue : int, units : int };
+table g = s |> derive(big = revenue >= 1500) |> group_by(region, big) |> aggregate(n = count(units)) |> sort(n desc);
+show g;

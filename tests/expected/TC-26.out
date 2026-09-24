@@ -1,0 +1,6 @@
+--- execution
+n (0 rows)
+region
+------
+--- 115 instructions executed, 12 rows and 36 cells processed by table stages
+front end: 44 tokens, 3 top-level statements, no errors

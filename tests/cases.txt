@@ -1,0 +1,47 @@
+# kind | id | what it checks | arguments to tblc | expected exit code
+# ---- front end (carried from Phase 2, now automated) ----
+run | TC-01 | longest-match operators and token positions      | tests/programs/demo.tbl --dump-tokens | 0
+run | TC-02 | lexical errors reported and recovered            | tests/programs/bad_chars.tbl | 1
+run | TC-03 | precedence and flat stage chain in the AST       | tests/programs/demo.tbl --dump-ast | 0
+run | TC-04 | panic-mode syntax recovery                       | tests/programs/bad_syntax.tbl | 1
+run | TC-05 | scoped symbol table with positions               | tests/programs/demo.tbl --dump-symbols | 0
+run | TC-06 | redeclaration, undeclared name, type errors      | tests/programs/bad_sema.tbl | 1
+run | TC-07 | static schema inference through seven stages     | tests/programs/demo.tbl --dump-schemas | 0
+run | TC-08 | unknown columns with suggestions, bad aggregate  | tests/programs/bad_schema.tbl | 1
+# ---- middle end ----
+run | TC-09 | quadruples, backpatching, per-row fragments      | tests/programs/demo.tbl --dump-tac | 0
+run | TC-10 | basic blocks and control flow graph              | tests/programs/demo.tbl --dump-cfg | 0
+run | TC-11 | DAG with shared node and dead nodes              | tests/programs/demo.tbl --dump-dag | 0
+run | TC-12 | local optimization, 37 to 33 quadruples          | tests/programs/demo.tbl --dump-tac -O1 | 0
+run | TC-13 | pipeline pushdown and fusion on the demo         | tests/programs/demo.tbl --dump-tac -O2 --dump-pipeline | 0
+run | TC-14 | pushdown refused when the filter reads derived   | tests/programs/pushdown_blocked.tbl --dump-pipeline -O2 | 0
+run | TC-15 | pushdown past select and sort, column pruning    | tests/programs/pushdown_sort.tbl --dump-pipeline -O2 | 0
+# ---- back end and execution ----
+run | TC-16 | scalar bytecode with resolved jump targets       | tests/programs/scalar.tbl --dump-bytecode | 0
+run | TC-17 | scalar loop executes, prints 1 3 5               | tests/programs/scalar.tbl --run | 0
+run | TC-18 | full demo pipeline executes                      | tests/programs/demo.tbl --run | 0
+run | TC-19 | optimized loop runs (jump renumbering fix)       | tests/programs/demo.tbl --run -O1 | 0
+run | TC-20 | demo at -O2: fewer rows and cells processed      | tests/programs/demo.tbl --run -O2 | 0
+run | TC-21 | string equality, select, sort, count/min/max     | tests/programs/strings.tbl --run | 0
+run | TC-22 | if/else, while, modulo, precedence at run time   | tests/programs/boundary/control.tbl --run | 0
+# ---- boundary cases ----
+run | TC-23 | empty table through group_by and aggregate       | tests/programs/boundary/empty_table.tbl --run | 0
+run | TC-24 | single-row table, mean of one value              | tests/programs/boundary/single_row.tbl --run | 0
+run | TC-25 | limit(0) and limit larger than the table         | tests/programs/boundary/limit_zero.tbl --run | 0
+run | TC-26 | filter that keeps no rows                        | tests/programs/boundary/filter_none.tbl --run | 0
+run | TC-27 | group_by on two keys, ties keep input order      | tests/programs/boundary/multi_key.tbl --run | 0
+# ---- runtime errors ----
+run | TC-28 | division by zero inside a derive, row reported   | tests/programs/runtime/rt_zero.tbl --run | 3
+run | TC-29 | missing CSV file                                 | tests/programs/runtime/rt_missing.tbl --run | 3
+run | TC-30 | declared column absent from the CSV header       | tests/programs/runtime/rt_nocol.tbl --run | 3
+run | TC-31 | field that does not parse as its declared type   | tests/programs/runtime/rt_badint.tbl --run | 3
+run | TC-32 | row with the wrong number of fields              | tests/programs/runtime/rt_short.tbl --run | 3
+run | TC-33 | float literal in scalar code rejected clearly    | tests/programs/shadow.tbl --run | 4
+run | TC-34 | unoptimized plan divides by zero                 | tests/programs/zero_guard.tbl --run | 3
+run | TC-35 | pushdown filters zero rows before the division   | tests/programs/zero_guard.tbl --run -O2 | 0
+# ---- optimization preserves meaning ----
+eq  | TC-36 | demo: same result at -O0 and -O2                 | tests/programs/demo.tbl
+eq  | TC-37 | strings: same result at -O0 and -O2              | tests/programs/strings.tbl
+eq  | TC-38 | blocked pushdown: same result                    | tests/programs/pushdown_blocked.tbl
+eq  | TC-39 | pushdown past sort: same result                  | tests/programs/pushdown_sort.tbl
+eq  | TC-40 | multi-key grouping: same result                  | tests/programs/boundary/multi_key.tbl

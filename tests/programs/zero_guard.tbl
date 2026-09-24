@@ -1,0 +1,5 @@
+# derive divides by units, and some rows have units = 0.
+# The filter that excludes them comes after the derive.
+table s = load("zero_rows.csv") with schema { region : string, revenue : int, units : int };
+table d = s |> derive(p = revenue / units) |> filter(units > 0);
+show d;

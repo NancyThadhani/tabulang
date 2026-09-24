@@ -1,0 +1,7 @@
+--- execution
+g (1 rows)
+region  n  avg   
+------  -  ------
+North   1  200.00
+--- 14 instructions executed, 3 rows and 11 cells processed by table stages
+front end: 63 tokens, 3 top-level statements, no errors

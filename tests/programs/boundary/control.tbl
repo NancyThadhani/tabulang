@@ -1,0 +1,9 @@
+let n : int = 17;
+let i : int = 2;
+let prime : bool = true;
+while (i * i <= n && prime) {
+  if (n % i == 0) { prime = false; } else { i = i + 1; }
+}
+if (prime) { print(1); } else { print(0); }
+let x : int = -7 + 3 * (4 - 1) % 5;
+print(x);

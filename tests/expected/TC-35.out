@@ -1,0 +1,9 @@
+optimization: 14 quadruples before, 13 after, 1 removed (7%)
+--- execution
+d (2 rows)
+region  revenue  units  p  
+------  -------  -----  ---
+North      1500     10  150
+East       2400     12  200
+--- 56 instructions executed, 4 rows and 12 cells processed by table stages
+front end: 48 tokens, 3 top-level statements, no errors

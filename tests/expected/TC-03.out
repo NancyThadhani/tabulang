@@ -1,0 +1,72 @@
+Program
+  TableDecl 'sales'
+    Pipeline
+      Load 'sales.csv'
+        ColDef 'region' : string
+        ColDef 'revenue' : int
+        ColDef 'units' : int
+  LetDecl 'threshold' : int
+    Binary '*'
+      IntLit '200'
+      IntLit '5'
+  LetDecl 'cap' : int
+    IntLit '40'
+  LetDecl 'lo' : int
+    Binary '+'
+      Binary '*'
+        Ident 'cap'
+        IntLit '2'
+      IntLit '1'
+  LetDecl 'hi' : int
+    Binary '+'
+      Binary '*'
+        Ident 'cap'
+        IntLit '2'
+      IntLit '5'
+  TableDecl 'top'
+    Pipeline
+      TableRef 'sales'
+      Stage 'derive'
+        AggItem 'unit_price'
+          Binary '/'
+            Ident 'revenue'
+            Ident 'units'
+      Stage 'filter'
+        Binary '&&'
+          Binary '>'
+            Ident 'revenue'
+            Ident 'threshold'
+          Binary '>'
+            Ident 'units'
+            IntLit '0'
+      Stage 'group_by'
+        IdList
+          Ident 'region'
+      Stage 'aggregate'
+        AggItem 'total' : sum
+          Ident 'revenue'
+        AggItem 'avg_price' : mean
+          Ident 'unit_price'
+      Stage 'sort'
+        SortKey 'total' : desc
+      Stage 'limit'
+        IntLit '3'
+  Show 'top'
+  LetDecl 'i' : int
+    IntLit '0'
+  While
+    Binary '<'
+      Ident 'i'
+      IntLit '3'
+    Block
+      Print
+        Binary '+'
+          Binary '*'
+            Ident 'i'
+            IntLit '2'
+          IntLit '1'
+      Assign 'i'
+        Binary '+'
+          Ident 'i'
+          IntLit '1'
+front end: 153 tokens, 9 top-level statements, no errors

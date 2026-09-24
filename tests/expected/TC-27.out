@@ -1,0 +1,15 @@
+--- execution
+g (9 rows)
+region   big  n
+-------  ---  -
+North      1  2
+East       1  2
+West       0  2
+South      0  1
+North      0  1
+South      1  1
+Central    1  1
+Central    0  1
+East       0  1
+--- 123 instructions executed, 45 rows and 159 cells processed by table stages
+front end: 64 tokens, 3 top-level statements, no errors

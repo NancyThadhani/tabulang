@@ -1,0 +1,7 @@
+--- pipeline optimization
+  pushdown: filter P0 moved above select (reads {revenue})
+  pushdown: filter P0 moved above sort (reads {revenue})
+  pruning: load "sales.csv" drops unread columns {units}
+  2 filter(s) pushed down, 1 column(s) pruned, 0 stage(s) fused
+optimization: 14 quadruples before, 14 after, 0 removed (0%)
+front end: 57 tokens, 3 top-level statements, no errors
